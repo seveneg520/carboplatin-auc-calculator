@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Carboplatin AUC 劑量與腎功能計算器</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1f2937;--muted:#667085;--line:#d9dee8;--accent:#8b4a3c;--accent2:#f4e8e4;--ok:#176b4d;--warn:#9a6700;--danger:#b42318}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;line-height:1.55}
+header{background:linear-gradient(135deg,#7f4438,#a66351);color:white;padding:28px 20px} header h1{margin:0 0 6px;font-size:clamp(24px,4vw,38px)} header p{margin:0;opacity:.92}
+main{max-width:1220px;margin:0 auto;padding:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:16px 0;box-shadow:0 4px 18px rgba(31,41,55,.05)}
+h2{margin:0 0 14px;font-size:22px} h3{margin:18px 0 10px;font-size:17px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+label{display:block;font-weight:650;font-size:14px;margin-bottom:5px}.hint{font-size:12px;color:var(--muted);margin-top:4px}.req::after{content:" *";color:var(--danger)}
+input,select,button,textarea{font:inherit}input,select{width:100%;padding:10px 11px;border:1px solid #b9c1cf;border-radius:10px;background:white;color:var(--ink)}input:focus,select:focus{outline:3px solid rgba(139,74,60,.15);border-color:var(--accent)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}button{border:0;border-radius:10px;padding:10px 15px;font-weight:700;cursor:pointer}.primary{background:var(--accent);color:white}.secondary{background:#eef1f6;color:#344054}.ghost{background:white;color:var(--accent);border:1px solid var(--accent)}
+.notice{border-left:5px solid var(--warn);background:#fff8e7;padding:12px 14px;border-radius:9px;margin:12px 0}.danger{border-left-color:var(--danger);background:#fff1f0}.ok{border-left-color:var(--ok);background:#ecfdf3}.small{font-size:13px;color:var(--muted)}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.result{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fbfcfe}.result strong.value{font-size:25px;color:var(--accent);display:block}.tag{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--accent2);color:var(--accent);font-size:12px;font-weight:700;margin-bottom:8px}
+table{width:100%;border-collapse:collapse;display:block;overflow-x:auto}th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;white-space:nowrap}th{background:#f1f3f7}.hidden{display:none!important}.formula{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#f4f5f7;padding:7px 9px;border-radius:8px;font-size:12px;white-space:normal;word-break:break-word}
+details{margin:10px 0}summary{cursor:pointer;font-weight:700}.footer{font-size:12px;color:var(--muted);padding:10px 0 35px}.kpi{font-size:20px;font-weight:800}.inline{display:flex;gap:8px;align-items:center}.inline>*{flex:1}.checkbox{display:flex;gap:8px;align-items:flex-start}.checkbox input{width:auto;margin-top:5px}.print-only{display:none}
+@media print{header,.actions,.no-print{display:none!important}body{background:white}.card{box-shadow:none;break-inside:avoid}.print-only{display:block}}
+</style>
+</head>
+<body>
+<header><h1>Carboplatin AUC 劑量與腎功能計算器</h1><p>離線單頁原型｜腎功能估算與 Carboplatin 劑量分階段計算</p></header>
+<main>
+<section class="card">
+<h2>Step 1｜病人資料與腎功能估算</h2>
+<div class="grid">
+<div><label class="req">年齡（歲）</label><input id="age" type="number" min="0" max="120" step="0.01" /></div>
+<div><label class="req">生理性別</label><select id="sex"><option value="">請選擇</option><option value="female">Female</option><option value="male">Male</option></select></div>
+<div><label class="req">身高（cm）</label><input id="height" type="number" min="1" step="0.1" /></div>
+<div><label class="req">體重（kg）</label><input id="weight" type="number" min="0.1" step="0.1" /></div>
+<div><label>Serum creatinine</label><div class="inline"><input id="scr" type="number" min="0" step="0.01" /><select id="scrUnit"><option value="mgdl">mg/dL</option><option value="umol">µmol/L</option></select></div></div>
+<div><label>Serum cystatin C（mg/L）</label><input id="cys" type="number" min="0" step="0.01" /></div>
+</div>
+<h3>24-hour urine creatinine clearance（選填）</h3>
+<div class="grid">
+<div><label>Urine creatinine</label><input id="ucr" type="number" min="0" step="0.01" /></div>
+<div><label>Urine creatinine unit</label><select id="ucrUnit"><option value="mgdl">mg/dL</option><option value="umol">µmol/L</option><option value="mmol">mmol/L</option></select></div>
+<div><label>Serum creatinine for collection</label><input id="scr24" type="number" min="0" step="0.01" /></div>
+<div><label>Serum creatinine unit</label><select id="scr24Unit"><option value="mgdl">mg/dL</option><option value="umol">µmol/L</option><option value="mmol">mmol/L</option></select></div>
+<div><label>Urine volume（mL）</label><input id="urineVol" type="number" min="0" step="1" /></div>
+<div><label>Collection duration（hours）</label><input id="collectionHours" type="number" min="0.1" step="0.1" value="24" /></div>
+</div>
+<div class="actions"><button class="primary" onclick="calculateRenal()">計算腎功能</button><button class="secondary" onclick="clearAll()">清除全部</button></div>
+<div id="renalErrors"></div>
+<div id="bsaBox" class="notice ok hidden"></div>
+<div id="renalResults" class="hidden"></div>
+</section>
+
+<section class="card">
+<h2>Step 2｜選擇或輸入 GFR，計算 Carboplatin</h2>
+<p class="small">腎功能結果不會自動代入。可由 Step 1 點選「帶入 Raw GFR」，或在此自行輸入。</p>
+<div class="grid">
+<div><label class="req">年齡（歲）</label><input id="carboAge" type="number" min="0" max="120" step="0.01" /></div>
+<div><label class="req">身高（cm）</label><input id="carboHeight" type="number" min="1" step="0.1" /></div>
+<div><label class="req">體重（kg）</label><input id="carboWeight" type="number" min="0.1" step="0.1" /></div>
+<div><label class="req">Target AUC</label><input id="auc" type="number" min="0.01" step="0.01" placeholder="例如 5 或 2.64" /></div>
+<div><label class="req">GFR 數值</label><input id="gfrInput" type="number" min="0" step="0.1" /></div>
+<div><label class="req">GFR 類型／單位</label><select id="gfrType"><option value="raw">Raw GFR（mL/min）</option><option value="normalized">Normalized GFR（mL/min/1.73 m²）</option><option value="perbsa">GFR normalized to patient BSA（mL/min/m²）</option></select></div>
+<div><label class="req">GFR 性質</label><select id="gfrNature"><option value="estimated">Estimated GFR</option><option value="crcl24">24-hour measured creatinine clearance</option><option value="measured">Directly measured GFR</option><option value="other">Other / user-entered</option></select></div>
+<div><label>GFR 來源註記</label><input id="gfrSource" type="text" placeholder="例如 CKiD U25 combined" /></div>
+<div><label>劑量取整</label><select id="rounding"><option value="none">不取整（顯示 1 位小數）</option><option value="1">四捨五入至整數 mg</option><option value="5">最接近 5 mg</option><option value="10">最接近 10 mg</option></select></div>
+</div>
+<div class="checkbox" style="margin-top:12px"><input id="confirmGfr" type="checkbox"/><label for="confirmGfr">我已確認所選 GFR 來源、型態及單位符合治療 protocol。</label></div>
+<div class="actions"><button class="primary" onclick="calculateCarbo()">計算 Carboplatin 劑量</button><button class="ghost" onclick="copySummary()">複製計算摘要</button><button class="secondary" onclick="window.print()">列印</button></div>
+<div id="carboErrors"></div><div id="carboResults" class="hidden"></div>
+</section>
+
+<section class="card">
+<h2>使用限制與臨床提醒</h2>
+<div class="notice danger"><strong>本工具僅執行公式計算，不取代臨床判斷或處方核對。</strong> 使用前應確認治療 protocol 指定的公式、腎功能測量方法、Target AUC 與 GFR cap 規則。</div>
+<ul>
+<li>eGFR 是估計值，不等同 measured GFR；GFR 越高時估算公式通常越不精確，趨勢常比單一數值更有資訊。</li>
+<li>CKiD U25 適用於 1–25 歲、輕至中度 CKD；U25 cystatin C equation 可能低估健康、無症狀兒童或年輕成人的 measured GFR。</li>
+<li>2009 CKiD Bedside equation 主要由 8–15 歲、輕至中度 CKD 兒童資料建立，用於快速估算。</li>
+<li>急性腎損傷、腎功能快速變化、極端體型／肌肉量、截肢、營養不良及重大水分狀態改變可能降低估算準確性。</li>
+<li>24-hour CrCl 受收集完整性及 creatinine 腎小管分泌影響，可能不同於真實 GFR；血清 creatinine 應盡量接近尿液收集期間。</li>
+<li>Calvert、Newell、Mann/Pein 使用 Raw GFR（mL/min）；Marina/St. Jude 使用 mL/min/m²，先得到 mg/m²，再乘 BSA 得 total dose。</li>
+<li>年齡 12 至 &lt;18 歲顯示 Calvert 僅供參考；兒童 modified Calvert formulas 不自動套用成人 125 mL/min cap。</li>
+<li>治癒性治療、極端體型或肌肉量、eGFR ≤45 或 &gt;125 mL/min/1.73 m²，或不同公式差異明顯時，應考慮 directly measured GFR。</li>
+</ul>
+<details><summary>公式與來源</summary>
+<p class="small">成人與兒童 eGFR 公式依 NIDDK 成人及 Children, Adolescents, & Young Adults 頁面（Last Reviewed May 2025）。CKiD U25: Pierce et al., Kidney Int. 2021;99:948–956. DOI 10.1016/j.kint.2020.10.047。2009 Bedside: Schwartz et al., JASN. 2009;20:629–637. DOI 10.1681/ASN.2008030287。</p>
+<p class="small">Carboplatin formulas 按本工具規格：Calvert = AUC × (Raw GFR + 25)；Newell = AUC × [Raw GFR + 0.36×weight]；Mann/Pein = AUC × [Raw GFR + 15×BSA]；Marina/St. Jude = AUC × [0.93×GFR(mL/min/m²)+15] mg/m²。</p>
+</details>
+</section>
+<div class="footer">Version 0.1｜計算全程於瀏覽器本機執行，不儲存或上傳資料。</div>
+</main>
+<script>
+const $=id=>document.getElementById(id); const n=id=>parseFloat($(id).value); const valid=x=>Number.isFinite(x)&&x>0;
+function fmt(x,d=1){return Number.isFinite(x)?x.toFixed(d):'—'}
+function bsa(h,w){return Math.sqrt(h*w/3600)}
+function scrMgdl(v,u){return u==='umol'?v/88.4:v}
+function warnBox(msg,type='danger'){return `<div class="notice ${type}">${msg}</div>`}
+function conversions(norm,B){return {norm,raw:norm*B/1.73,perbsa:norm/1.73}}
+function resultCard(name,r,source,extra=''){
+return `<div class="result"><span class="tag">${source}</span><h3>${name}</h3><strong class="value">${fmt(r.norm)} mL/min/1.73 m²</strong><div>Raw GFR: <b>${fmt(r.raw)} mL/min</b></div><div>Per patient BSA: <b>${fmt(r.perbsa)} mL/min/m²</b></div>${extra}<div class="actions no-print"><button class="ghost" onclick='useGfr(${JSON.stringify(r.raw)},${JSON.stringify(name)})'>帶入 Raw GFR</button></div></div>`}
+function adultCr(age,sex,scr){const k=sex==='female'?0.7:0.9,a=sex==='female'?-0.241:-0.302,sexF=sex==='female'?1.012:1;return 142*Math.pow(Math.min(scr/k,1),a)*Math.pow(Math.max(scr/k,1),-1.2)*Math.pow(.9938,age)*sexF}
+function adultCrCys(age,sex,scr,cys){const k=sex==='female'?.7:.9,a=sex==='female'?-.219:-.144,sexF=sex==='female'?.963:1;return 135*Math.pow(Math.min(scr/k,1),a)*Math.pow(Math.max(scr/k,1),-.544)*Math.pow(Math.min(cys/.8,1),-.323)*Math.pow(Math.max(cys/.8,1),-.778)*Math.pow(.9961,age)*sexF}
+function adultCys(age,sex,cys){return 133*Math.pow(Math.min(cys/.8,1),-.499)*Math.pow(Math.max(cys/.8,1),-1.328)*Math.pow(.996,age)*(sex==='female'?.932:1)}
+function kCr(age,sex){if(age<1||age>25)return NaN;if(age<12)return (sex==='female'?36.1:39)*Math.pow(1.008,age-12);if(age<18)return sex==='female'?36.1*Math.pow(1.023,age-12):39*Math.pow(1.045,age-12);return sex==='female'?41.4:50.8}
+function kCys(age,sex){if(age<1||age>25)return NaN;if(sex==='female'){if(age<12)return 79.9*Math.pow(1.004,age-12);if(age<18)return 79.9*Math.pow(.974,age-12);return 68.3}else{if(age<=15)return 87.2*Math.pow(1.011,age-15);if(age<18)return 87.2*Math.pow(.960,age-15);return 77.1}}
+function calc24CrCl(ucr,uUnit,scr,sUnit,vol,hours){if(uUnit!==sUnit)return {error:'Urine creatinine 與 serum creatinine 必須使用相同單位。'};return {raw:ucr*vol/(scr*hours*60)}}
+function calculateRenal(){
+ const age=n('age'),sex=$('sex').value,h=n('height'),w=n('weight'),scrVal=n('scr'),cys=n('cys'); let errs=[];
+ if(!Number.isFinite(age)||age<0)errs.push('請輸入有效年齡。'); if(!sex)errs.push('請選擇生理性別。'); if(!valid(h))errs.push('身高為必填。'); if(!valid(w))errs.push('體重為必填。');
+ $('renalErrors').innerHTML=errs.length?warnBox(errs.join('<br>')):''; if(errs.length)return;
+ const B=bsa(h,w); $('bsaBox').classList.remove('hidden'); $('bsaBox').innerHTML=`Mosteller BSA = √(${fmt(h)} × ${fmt(w)} / 3600) = <b>${fmt(B,3)} m²</b>`;
+ let html='<h3>腎功能結果</h3><div class="result-grid">'; const scr=valid(scrVal)?scrMgdl(scrVal,$('scrUnit').value):NaN;
+ if(age>=18){if(valid(scr))html+=resultCard('2021 CKD-EPI Creatinine',conversions(adultCr(age,sex,scr),B),'Adult');if(valid(scr)&&valid(cys))html+=resultCard('2021 CKD-EPI Creatinine–Cystatin C',conversions(adultCrCys(age,sex,scr,cys),B),'Adult','<p class="small">兩項 marker 皆可得時通常優先參考。</p>');if(valid(cys))html+=resultCard('2012 CKD-EPI Cystatin C',conversions(adultCys(age,sex,cys),B),'Adult')}
+ if(age>=1&&age<=25){let ucrN=NaN,ucysN=NaN;if(valid(scr)){ucrN=kCr(age,sex)*(h/100)/scr;html+=resultCard('CKiD U25 Creatinine',conversions(ucrN,B),'Age 1–25')}if(valid(cys)){ucysN=kCys(age,sex)/cys;html+=resultCard('CKiD U25 Cystatin C',conversions(ucysN,B),'Age 1–25','<p class="small">健康無症狀族群可能低估 measured GFR。</p>')}if(valid(ucrN)&&valid(ucysN))html+=resultCard('CKiD U25 Creatinine–Cystatin C',conversions((ucrN+ucysN)/2,B),'Preferred U25 average');if(valid(scr))html+=resultCard('2009 CKiD Bedside',conversions(41.3*(h/100)/scr,B),'Legacy pediatric')}
+ if(age<1)html+=warnBox('年齡 <1 歲：本原型不計算 CKiD U25；需使用 neonatal/infant-specific equation。','danger');
+ const ucr=n('ucr'),scr24=n('scr24'),vol=n('urineVol'),hrs=n('collectionHours'); if([ucr,scr24,vol,hrs].some(Number.isFinite)){if([ucr,scr24,vol,hrs].every(valid)){const cc=calc24CrCl(ucr,$('ucrUnit').value,scr24,$('scr24Unit').value,vol,hrs);if(cc.error)html+=warnBox(cc.error);else{const r={raw:cc.raw,norm:cc.raw*1.73/B,perbsa:cc.raw/B};html+=resultCard('Timed urine creatinine clearance',r,'Measured CrCl',hrs!==24?`<p class="small">收集時間 ${fmt(hrs)} 小時；公式使用實際分鐘數。</p>`:'')}}else html+=warnBox('24-hour CrCl 欄位若開始填寫，尿 creatinine、血清 creatinine、尿量與收集時間皆需完整。')}
+ html+='</div>'; if(!valid(scrVal)&&!valid(cys)&&![ucr,scr24,vol,hrs].every(valid))html+=warnBox('尚未提供可計算的 creatinine、cystatin C 或 timed urine collection 資料。');
+ $('renalResults').innerHTML=html;$('renalResults').classList.remove('hidden');
+ $('carboAge').value=age;$('carboHeight').value=h;$('carboWeight').value=w;
+}
+function useGfr(raw,source){$('gfrInput').value=Number(raw).toFixed(1);$('gfrType').value='raw';$('gfrSource').value=source;$('gfrNature').value=source.includes('clearance')?'crcl24':'estimated';window.scrollTo({top:$('carboAge').getBoundingClientRect().top+window.scrollY-80,behavior:'smooth'})}
+function rawFromInput(value,type,B){if(type==='raw')return value;if(type==='normalized')return value*B/1.73;return value*B}
+function roundDose(x,mode){if(mode==='none')return x;if(mode==='1')return Math.round(x);const m=Number(mode);return Math.round(x/m)*m}
+function doseLine(name,raw,rounded,unit='mg',extra=''){return `<tr><td>${name}</td><td>${fmt(raw)}</td><td><b>${modeFmt(rounded)}</b> ${unit}</td><td>${extra}</td></tr>`}
+function modeFmt(x){return Number.isInteger(x)?x.toString():fmt(x)}
+function calculateCarbo(){
+ const age=n('carboAge'),h=n('carboHeight'),w=n('carboWeight'),auc=n('auc'),gfr=n('gfrInput'),type=$('gfrType').value,nature=$('gfrNature').value,rounding=$('rounding').value;let errs=[];
+ if(!Number.isFinite(age)||age<0)errs.push('請輸入有效年齡。');if(!valid(h))errs.push('身高為必填。');if(!valid(w))errs.push('體重為必填。');if(!valid(auc))errs.push('Target AUC 必須大於 0。');if(!valid(gfr))errs.push('GFR 必須大於 0。');if(!$('confirmGfr').checked)errs.push('請確認 GFR 來源、型態及單位。');
+ $('carboErrors').innerHTML=errs.length?warnBox(errs.join('<br>')):'';if(errs.length)return;
+ const B=bsa(h,w),raw=rawFromInput(gfr,type,B),norm=raw*1.73/B,per=raw/B;let notices='';if(auc>10)notices+=warnBox('Target AUC >10，請再次核對 protocol。');if(raw<5||raw>250)notices+=warnBox(`Raw GFR ${fmt(raw)} mL/min 超出一般輸入警示範圍（5–250），請核對。`);if(norm<=45||norm>125)notices+=warnBox(`Normalized GFR ${fmt(norm)} mL/min/1.73 m² 位於建議考慮 directly measured GFR 的區間。`);
+ let rows='';
+ if(age<18){const newell=auc*(raw+.36*w),mann=auc*(raw+15*B),marinaM2=auc*(.93*per+15),marinaTotal=marinaM2*B;rows+=doseLine('Newell total dose',newell,roundDose(newell,rounding));rows+=doseLine('Mann/Pein total dose',mann,roundDose(mann,rounding));rows+=doseLine('Marina/St. Jude dose',marinaM2,roundDose(marinaM2,rounding),'mg/m²');rows+=doseLine('Marina/St. Jude total dose',marinaTotal,roundDose(marinaTotal,rounding));if(age>=12){const cal=auc*(raw+25);rows+=doseLine('Calvert reference',cal,roundDose(cal,rounding),'mg','12–<18 歲，僅供參考');if(raw>125){const cap=auc*150;rows+=doseLine('Calvert reference with adult 125 cap',cap,roundDose(cap,rounding),'mg','成人 cap 規則之參考，不作兒童推薦')}}}
+ else{const cal=auc*(raw+25);if(raw>125&&nature!=='measured'){const cap=auc*150;rows+=doseLine('Calvert uncapped',cal,roundDose(cal,rounding));rows+=doseLine('Calvert capped at 125 mL/min',cap,roundDose(cap,rounding),'mg','主要參考（estimated/CrCl）');notices+=warnBox('Raw GFR >125 mL/min：同時呈現 capped 與 uncapped dose。')}else{rows+=doseLine('Calvert total dose',cal,roundDose(cal,rounding));if(raw>125&&nature==='measured')notices+=warnBox('Directly measured GFR >125 mL/min：未自動套用 cap，請依 protocol 判斷。')}}
+ const source=$('gfrSource').value||'User-entered';const summary=`Age ${fmt(age,2)} y; height ${fmt(h)} cm; weight ${fmt(w)} kg; BSA ${fmt(B,3)} m²; GFR source: ${source}; Raw GFR ${fmt(raw)} mL/min; Normalized GFR ${fmt(norm)} mL/min/1.73 m²; Target AUC ${fmt(auc,2)}.`;
+ $('carboResults').innerHTML=`${notices}<div class="notice ok"><b>換算完成：</b> BSA ${fmt(B,3)} m²；Raw GFR ${fmt(raw)} mL/min；Normalized GFR ${fmt(norm)} mL/min/1.73 m²；GFR normalized to patient BSA ${fmt(per)} mL/min/m²。</div><table><thead><tr><th>Formula</th><th>原始結果</th><th>顯示／取整結果</th><th>備註</th></tr></thead><tbody>${rows}</tbody></table><details><summary>完整計算摘要</summary><p id="summaryText">${summary}</p><div class="formula">GFR source: ${source}; input type: ${type}; nature: ${nature}; rounding: ${rounding}.</div></details>`;
+ $('carboResults').classList.remove('hidden');
+}
+async function copySummary(){const el=$('summaryText');if(!el){$('carboErrors').innerHTML=warnBox('請先完成 Carboplatin 計算。');return}try{await navigator.clipboard.writeText(el.textContent);$('carboErrors').innerHTML=warnBox('摘要已複製。','ok')}catch(e){$('carboErrors').innerHTML=warnBox('瀏覽器未允許自動複製，請手動選取摘要。')}}
+function clearAll(){document.querySelectorAll('input').forEach(i=>{if(i.type==='checkbox')i.checked=false;else i.value=''});$('collectionHours').value=24;document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);$('scrUnit').value='mgdl';$('ucrUnit').value='mgdl';$('scr24Unit').value='mgdl';$('gfrType').value='raw';$('gfrNature').value='estimated';['renalErrors','renalResults','bsaBox','carboErrors','carboResults'].forEach(id=>{$(id).innerHTML='';$(id).classList.add('hidden')})}
+</script>
+</body></html>
